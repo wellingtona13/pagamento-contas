@@ -236,7 +236,8 @@
         "11054": { nome: "House & Style", conta: "09145-6" },
         "51313": { nome: "Alphaman", conta: "09167-8" },
         "91477": { nome: "King's Store", conta: "09189-4" },
-        "10596": { nome: "Ace&Pés", conta: "09201-9" }
+        "10596": { nome: "Ace&Pés", conta: "09201-9" },
+        "9125": { nome: "Empresa Teste", conta: "10001-0" }
     };
 
     let tiposDespesa = {
@@ -331,6 +332,96 @@
         document.querySelectorAll('.erro, .sucesso').forEach(e => { e.style.display = 'none'; e.textContent = ''; });
         if (id === 'telaCategorias') atualizarListaCategorias();
         if (id === 'telaPagamento') carregarContaDebito();
+        if (id === 'telaProfessor') inicializarBoletosPadrao();
+    }
+
+    // ==================== INICIALIZAR BOLETOS PADRÃO ====================
+    async function inicializarBoletosPadrao() {
+        try {
+            const resp = await fetch(API_URL + '?tipo=boletos');
+            const boletos = await resp.json();
+            if (boletos.length === 0) {
+                // Cadastrar boletos padrão para todas as empresas
+                const boletosPadrao = [
+                    // Empresa Teste (9125)
+                    { empresa: "9125", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "9125", tipo: "02", valor: 250.00, venc: "2026-07-03" },
+                    { empresa: "9125", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "9125", tipo: "04", valor: 90.00, venc: "2026-07-05" },
+                    { empresa: "9125", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Papelaria dos Vales (12027)
+                    { empresa: "12027", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "12027", tipo: "02", valor: 220.00, venc: "2026-07-03" },
+                    { empresa: "12027", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "12027", tipo: "04", valor: 85.00, venc: "2026-07-05" },
+                    { empresa: "12027", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Stella del Caffé (19314)
+                    { empresa: "19314", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "19314", tipo: "02", valor: 350.00, venc: "2026-07-03" },
+                    { empresa: "19314", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "19314", tipo: "04", valor: 110.00, venc: "2026-07-05" },
+                    { empresa: "19314", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Doce Encanto (21658)
+                    { empresa: "21658", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "21658", tipo: "02", valor: 280.00, venc: "2026-07-03" },
+                    { empresa: "21658", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "21658", tipo: "04", valor: 95.00, venc: "2026-07-05" },
+                    { empresa: "21658", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // House & Style (11054)
+                    { empresa: "11054", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "11054", tipo: "02", valor: 200.00, venc: "2026-07-03" },
+                    { empresa: "11054", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "11054", tipo: "04", valor: 85.00, venc: "2026-07-05" },
+                    { empresa: "11054", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Alphaman (51313)
+                    { empresa: "51313", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "51313", tipo: "02", valor: 180.00, venc: "2026-07-03" },
+                    { empresa: "51313", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "51313", tipo: "04", valor: 95.00, venc: "2026-07-05" },
+                    { empresa: "51313", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // King's Store (91477)
+                    { empresa: "91477", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "91477", tipo: "02", valor: 180.00, venc: "2026-07-03" },
+                    { empresa: "91477", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "91477", tipo: "04", valor: 85.00, venc: "2026-07-05" },
+                    { empresa: "91477", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Ace&Pés (10596)
+                    { empresa: "10596", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "10596", tipo: "02", valor: 190.00, venc: "2026-07-03" },
+                    { empresa: "10596", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "10596", tipo: "04", valor: 80.00, venc: "2026-07-05" },
+                    { empresa: "10596", tipo: "05", valor: 1820.00, venc: "2026-06-29" }
+                ];
+
+                for (let b of boletosPadrao) {
+                    const valorCentavos = Math.round(b.valor * 100);
+                    const valorStr = String(valorCentavos).padStart(6, '0');
+                    const base = b.empresa + b.tipo + valorStr;
+                    let soma = 0;
+                    for (let d of base) soma += parseInt(d);
+                    const dv = soma % 10;
+                    const codigoBarras = `${b.empresa}${b.tipo}${valorStr}${dv}`;
+
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'cadastrarBoleto',
+                            codigoEmpresa: b.empresa,
+                            tipoDespesaCod: b.tipo,
+                            tipoDespesaNome: tiposDespesa[b.tipo],
+                            valor: b.valor,
+                            valorStr,
+                            vencimento: b.venc,
+                            codigoBarras,
+                            digitoVerificador: dv
+                        })
+                    });
+                }
+                console.log('Boletos padrão cadastrados com sucesso!');
+            }
+        } catch (e) {
+            console.log('Erro ao inicializar boletos padrão:', e);
+        }
     }
 
     // ==================== LOGIN ====================
@@ -398,10 +489,10 @@
 
         const codigoEmpresa = codigoBarras.substring(0, 5);
         const tipoDespesaCod = codigoBarras.substring(5, 7);
-        const valorStr = codigoBarras.substring(7, 13); // 6 dígitos
+        const valorStr = codigoBarras.substring(7, 13);
         const digitoVerificador = codigoBarras.substring(13, 14);
 
-        if (!empresas[codigoEmpresa]) { erroDiv.textContent = 'Código de empresa no boleto inválido.'; erroDiv.style.display = 'block'; return; }
+        if (!empresas[codigoEmpresa] && codigoEmpresa !== "09125") { erroDiv.textContent = 'Código de empresa no boleto inválido.'; erroDiv.style.display = 'block'; return; }
         if (!tiposDespesa[tipoDespesaCod]) { erroDiv.textContent = 'Tipo de despesa inválido.'; erroDiv.style.display = 'block'; return; }
 
         const valor = parseFloat(valorStr) / 100;
@@ -430,7 +521,7 @@
             vencimentoOriginal
         };
 
-        document.getElementById('resumoEmpresa').textContent = `${empresas[codigoEmpresa].nome} (${codigoEmpresa})`;
+        document.getElementById('resumoEmpresa').textContent = `${empresas[codigoEmpresa] ? empresas[codigoEmpresa].nome : 'Empresa Teste'} (${codigoEmpresa})`;
         document.getElementById('resumoTipo').textContent = tiposDespesa[tipoDespesaCod];
         document.getElementById('resumoValor').textContent = `R$ ${valor.toFixed(2)}`;
         document.getElementById('resumoVencimento').textContent = vencimentoOriginal;
@@ -498,7 +589,7 @@
         if (!vencimento) { erroDiv.textContent = 'Selecione a data de vencimento.'; erroDiv.style.display = 'block'; return; }
 
         const valorCentavos = Math.round(valorReais * 100);
-        const valorStr = String(valorCentavos).padStart(6, '0'); // 6 dígitos
+        const valorStr = String(valorCentavos).padStart(6, '0');
         const base = codigoEmpresa + tipoDespesaCod + valorStr;
         let soma = 0;
         for (let d of base) soma += parseInt(d);
@@ -530,13 +621,11 @@
         const filtro = document.getElementById('filtroEmpresaBoletos').value;
         container.innerHTML = '<p style="text-align:center; color:#666;">Carregando...</p>';
         try {
-            // Carregar boletos
             let urlBoletos = API_URL + '?tipo=boletos';
             if (filtro !== 'todas') urlBoletos += '&empresa=' + filtro;
             const respBoletos = await fetch(urlBoletos);
             const boletos = await respBoletos.json();
 
-            // Carregar pagamentos para cruzar
             let urlPag = API_URL + '?tipo=pagamentos';
             if (filtro !== 'todas') urlPag += '&empresa=' + filtro;
             const respPag = await fetch(urlPag);
@@ -555,7 +644,6 @@
                 const nomeEmp = empresas[b.CodigoEmpresa] ? empresas[b.CodigoEmpresa].nome : b.CodigoEmpresa;
                 const venc = b.DataVencimento ? new Date(b.DataVencimento + 'T00:00:00') : null;
                 
-                // Verificar se foi pago
                 const pago = pagamentos.some(p => 
                     p.CodigoEmpresa === b.CodigoEmpresa && 
                     p.TipoDespesaCod === b.TipoDespesaCod && 
