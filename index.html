@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Pagamento de Contas</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 35px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        h2 { color: #1a365d; text-align: center; margin-bottom: 25px; }
+        h3 { color: #2563eb; margin-bottom: 20px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; color: #333; }
+        input, select { width: 100%; padding: 12px; border: 2px solid #e5e7eb; border-radius: 8px; font-size: 1em; transition: border-color 0.2s; }
+        input:focus, select:focus { border-color: #2563eb; outline: none; }
+        .btn { padding: 14px; border: none; border-radius: 8px; font-weight: bold; font-size: 1em; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-success { background: #22c55e; color: white; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-secondary { background: #64748b; color: white; }
+        .btn-secondary:hover { background: #475569; }
+        .btn-outline { background: white; border: 2px solid #2563eb; color: #2563eb; }
+        .btn-outline:hover { background: #eff6ff; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-sm { padding: 8px 16px; font-size: 0.85em; width: auto; }
+        .resumo-box { background: #f0fdf4; border: 1px solid #86efac; padding: 20px; border-radius: 10px; margin: 20px 0; display: none; }
+        .resumo-box p { margin: 8px 0; font-size: 1.05em; }
+        .resumo-box strong { color: #1a365d; }
+        .erro { background: #fef2f2; color: #991b1b; padding: 10px; border-radius: 6px; margin: 10px 0; font-weight: 500; display: none; }
+        .sucesso { background: #f0fdf4; color: #166534; padding: 10px; border-radius: 6px; margin: 10px 0; font-weight: 500; display: none; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 0.85em; }
+        th { background: #1a365d; color: white; padding: 10px; text-align: left; }
+        td { border: 1px solid #ddd; padding: 8px; }
+        .filtros { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 15px; flex-wrap: wrap; }
+        .filtros .form-group { flex: 1; margin-bottom: 0; min-width: 150px; }
+        .tela { display: none; }
+        .tela.ativa { display: block; }
+        .btn-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        .btn-group .btn { flex: 1; min-width: 120px; }
+        .categorias-list { margin: 10px 0; padding: 10px; background: #f8fafc; border-radius: 6px; }
+        .categoria-item { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #e5e7eb; }
+        .categoria-item span { font-weight: 500; }
+        .categoria-item button { background: #fee2e2; color: #991b1b; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 0.8em; }
+        .categoria-item button:hover { background: #fecaca; }
+        .status-registrado { background: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+        .status-liquidado { background: #dcfce7; color: #166534; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+        .status-vencido { background: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- ==================== TELA DE LOGIN ==================== -->
+    <div class="tela ativa" id="telaLogin">
+        <h2>🏦 Sistema de Pagamento de Contas</h2>
+        <p style="text-align:center; color:#666; margin-bottom:20px;">Digite o código da sua empresa para acessar</p>
+        <div class="form-group">
+            <label for="codigoLogin">Código de Acesso</label>
+            <input type="text" id="codigoLogin" placeholder="Código da empresa ou do professor">
+        </div>
+        <div class="erro" id="erroLogin">Código inválido.</div>
+        <button class="btn btn-primary" onclick="fazerLogin()">Entrar</button>
+    </div>
+
+    <!-- ==================== TELA PRINCIPAL (ALUNO) ==================== -->
+    <div class="tela" id="telaPrincipal">
+        <h2>🏦 Sistema de Pagamento</h2>
+        <p style="text-align:center; color:#666; margin-bottom:20px;">Empresa: <strong id="nomeEmpresa"></strong> | Código: <strong id="codigoEmpresa"></strong></p>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="mostrarTela('telaPagamento')">💳 Pagar Contas</button>
+            <button class="btn btn-outline" onclick="mostrarTela('telaConsulta')">📋 Consultar Pagamentos</button>
+        </div>
+        <button class="btn btn-secondary" style="margin-top:10px;" onclick="sair()">🚪 Sair</button>
+    </div>
+
+    <!-- ==================== TELA PRINCIPAL (PROFESSOR) ==================== -->
+    <div class="tela" id="telaProfessor">
+        <h2>🔧 Painel do Professor</h2>
+        <p style="text-align:center; color:#666; margin-bottom:20px;">Código: <strong>210326</strong></p>
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="mostrarTela('telaCadastroBoleto')">📝 Cadastrar Boletos</button>
+            <button class="btn btn-outline" onclick="mostrarTela('telaConsultaBoletos')">📋 Consultar Boletos</button>
+            <button class="btn btn-outline" onclick="mostrarTela('telaConsultaProfessor')">📋 Pagamentos por Empresa</button>
+            <button class="btn btn-secondary" onclick="mostrarTela('telaCategorias')">📂 Gerenciar Categorias</button>
+        </div>
+        <button class="btn btn-secondary" style="margin-top:10px;" onclick="sair()">🚪 Sair</button>
+    </div>
+
+    <!-- ==================== TELA DE PAGAMENTO ==================== -->
+    <div class="tela" id="telaPagamento">
+        <h3>💳 Pagar Conta</h3>
+        <div class="form-group">
+            <label for="contaDebito">Conta de Débito</label>
+            <select id="contaDebito"></select>
+        </div>
+        <div class="form-group">
+            <label for="codigoBarras">Código de Barras (14 dígitos, com ou sem traços)</label>
+            <input type="text" id="codigoBarras" placeholder="Ex: 12027010800008 ou 12027-01-080000-8">
+        </div>
+        <div class="form-group">
+            <label for="dataPagamento">Data de Pagamento</label>
+            <input type="date" id="dataPagamento">
+        </div>
+        <div class="erro" id="erroPagamento"></div>
+        <button class="btn btn-primary" onclick="validarPagamento()">✅ OK – Verificar Conta</button>
+
+        <div class="resumo-box" id="resumoPagamento">
+            <h4>📄 Resumo da Conta</h4>
+            <p><strong>Empresa:</strong> <span id="resumoEmpresa"></span></p>
+            <p><strong>Tipo de Despesa:</strong> <span id="resumoTipo"></span></p>
+            <p><strong>Valor do Boleto:</strong> <span id="resumoValor"></span></p>
+            <p><strong>Data de Vencimento Original:</strong> <span id="resumoVencimento"></span></p>
+            <p><strong>Data de Pagamento:</strong> <span id="resumoData"></span></p>
+            <button class="btn btn-success" onclick="confirmarPagamento()">✅ Confirmar Pagamento</button>
+            <button class="btn btn-secondary" style="margin-top:5px;" onclick="cancelarPagamento()">❌ Cancelar</button>
+        </div>
+
+        <button class="btn btn-secondary" style="margin-top:15px;" onclick="voltarParaAluno()">⬅ Voltar</button>
+    </div>
+
+    <!-- ==================== TELA DE CONSULTA (ALUNO) ==================== -->
+    <div class="tela" id="telaConsulta">
+        <h3>📋 Meus Pagamentos</h3>
+        <div id="tabelaConsulta"><p style="text-align:center; color:#666;">Carregando...</p></div>
+        <button class="btn btn-secondary" onclick="voltarParaAluno()">⬅ Voltar</button>
+    </div>
+
+    <!-- ==================== TELA DE CADASTRO DE BOLETOS (PROFESSOR) ==================== -->
+    <div class="tela" id="telaCadastroBoleto">
+        <h3>📝 Cadastrar Boleto</h3>
+        <div class="form-group">
+            <label for="cbEmpresa">Empresa</label>
+            <select id="cbEmpresa"></select>
+        </div>
+        <div class="form-group">
+            <label for="cbTipoDespesa">Tipo de Despesa</label>
+            <select id="cbTipoDespesa"></select>
+        </div>
+        <div class="form-group">
+            <label for="cbValor">Valor em Reais (R$)</label>
+            <input type="number" id="cbValor" step="0.01" min="0.01" placeholder="Ex: 800.00">
+            <small style="color:#666;">Digite o valor exato. Ex: 80.00 para R$ 80,00 | 1820.00 para R$ 1.820,00</small>
+        </div>
+        <div class="form-group">
+            <label for="cbVencimento">Data de Vencimento</label>
+            <input type="date" id="cbVencimento">
+        </div>
+        <div class="sucesso" id="sucessoCadastro"></div>
+        <div class="erro" id="erroCadastro"></div>
+        <button class="btn btn-primary" onclick="cadastrarBoleto()">💾 Cadastrar Boleto</button>
+        <button class="btn btn-secondary" style="margin-top:10px;" onclick="voltarParaProfessor()">⬅ Voltar</button>
+    </div>
+
+    <!-- ==================== TELA DE CONSULTA DE BOLETOS (PROFESSOR) ==================== -->
+    <div class="tela" id="telaConsultaBoletos">
+        <h3>📋 Consultar Boletos Cadastrados</h3>
+        <div class="filtros">
+            <div class="form-group">
+                <label for="filtroEmpresaBoletos">Empresa</label>
+                <select id="filtroEmpresaBoletos">
+                    <option value="todas">Todas</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:0;">
+                <button class="btn btn-primary btn-sm" onclick="carregarBoletos()">🔍 Filtrar</button>
+            </div>
+        </div>
+        <div id="tabelaBoletos"><p style="text-align:center; color:#666;">Selecione uma empresa e clique em Filtrar.</p></div>
+        <button class="btn btn-secondary" onclick="voltarParaProfessor()">⬅ Voltar</button>
+    </div>
+
+    <!-- ==================== TELA DE CONSULTA DE PAGAMENTOS (PROFESSOR) ==================== -->
+    <div class="tela" id="telaConsultaProfessor">
+        <h3>📋 Pagamentos Realizados</h3>
+        <div class="filtros">
+            <div class="form-group">
+                <label for="filtroEmpresa">Empresa</label>
+                <select id="filtroEmpresa">
+                    <option value="todas">Todas</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:0;">
+                <button class="btn btn-primary btn-sm" onclick="carregarConsultasProfessor()">🔍 Filtrar</button>
+            </div>
+        </div>
+        <div id="tabelaConsultaProfessor"><p style="text-align:center; color:#666;">Selecione uma empresa e clique em Filtrar.</p></div>
+        <button class="btn btn-secondary" onclick="voltarParaProfessor()">⬅ Voltar</button>
+    </div>
+
+    <!-- ==================== TELA DE CATEGORIAS (PROFESSOR) ==================== -->
+    <div class="tela" id="telaCategorias">
+        <h3>📂 Gerenciar Categorias de Despesas</h3>
+        <div class="categorias-list" id="listaCategorias"></div>
+        <div class="form-group">
+            <label for="novaCategoriaCod">Código da Nova Categoria (2 dígitos)</label>
+            <input type="text" id="novaCategoriaCod" maxlength="2" placeholder="Ex: 06">
+        </div>
+        <div class="form-group">
+            <label for="novaCategoriaNome">Nome da Nova Categoria</label>
+            <input type="text" id="novaCategoriaNome" placeholder="Ex: Seguro">
+        </div>
+        <div class="sucesso" id="sucessoCategoria"></div>
+        <div class="erro" id="erroCategoria"></div>
+        <button class="btn btn-primary" onclick="adicionarCategoria()">➕ Adicionar Categoria</button>
+        <button class="btn btn-secondary" style="margin-top:10px;" onclick="voltarParaProfessor()">⬅ Voltar</button>
+    </div>
+</div>
+
+<script>
+    // ⚠️ SUBSTITUA PELA URL DO SEU GOOGLE APPS SCRIPT
+    const API_URL = "https://script.google.com/macros/s/AKfycby7dZU_SNf4wbqzn4x9BnIQRzi0r8Z109D8UD-is1XJe8ioDHyTRDaUyj1MYcaer4PLFg/exec";
+
+    const empresas = {
+        "12027": { nome: "Papelaria dos Vales", conta: "06789-0" },
+        "19314": { nome: "Stella del Caffé", conta: "08901-2" },
+        "21658": { nome: "Doce Encanto", conta: "09123-4" },
+        "11054": { nome: "House & Style", conta: "09145-6" },
+        "51313": { nome: "Alphaman", conta: "09167-8" },
+        "91477": { nome: "King's Store", conta: "09189-4" },
+        "10596": { nome: "Ace&Pés", conta: "09201-9" },
+        "09125": { nome: "Empresa Teste", conta: "10001-0" }
+    };
+
+    // Categorias padrão garantidas
+    let tiposDespesa = {
+        "01": "Aluguel",
+        "02": "Energia Elétrica",
+        "03": "Internet",
+        "04": "Água e Esgoto",
+        "05": "Folha Salarial"
+    };
+
+    const PROFESSOR_ID = "210326";
+    let empresaAtual = null;
+    let pagamentoAtual = null;
+
+    // ==================== INICIALIZAÇÃO ====================
+    document.getElementById('dataPagamento').value = new Date().toISOString().split('T')[0];
+    document.getElementById('cbVencimento').value = new Date().toISOString().split('T')[0];
+    
+    async function inicializar() {
+        await carregarCategorias();
+        carregarSelectEmpresas();
+        carregarSelectCategorias();
+    }
+
+    async function carregarCategorias() {
+        try {
+            const response = await fetch(API_URL + '?tipo=categorias');
+            const dados = await response.json();
+            if (dados.length > 0) {
+                // Mantém as categorias padrão e adiciona as da planilha
+                const novasCategorias = {};
+                dados.forEach(cat => { novasCategorias[cat.Codigo] = cat.Nome; });
+                // Mescla com as categorias padrão (planilha tem prioridade)
+                tiposDespesa = { ...tiposDespesa, ...novasCategorias };
+            }
+        } catch (e) {
+            console.log("Usando categorias padrão (erro ao carregar da planilha):", e);
+        }
+        atualizarListaCategorias();
+    }
+
+    function atualizarListaCategorias() {
+        const lista = document.getElementById('listaCategorias');
+        if (!lista) return;
+        let html = '';
+        for (let cod in tiposDespesa) {
+            html += `<div class="categoria-item">
+                <span>${cod} - ${tiposDespesa[cod]}</span>
+                <button onclick="excluirCategoria('${cod}')">🗑 Excluir</button>
+            </div>`;
+        }
+        lista.innerHTML = html;
+    }
+
+    async function excluirCategoria(codigo) {
+        if (!confirm(`Deseja realmente excluir a categoria ${codigo} - ${tiposDespesa[codigo]}?`)) return;
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'excluirCategoria', codigo })
+            });
+            delete tiposDespesa[codigo];
+            atualizarListaCategorias();
+            carregarSelectCategorias();
+        } catch (e) { alert('Erro ao excluir categoria.'); }
+    }
+
+    function carregarSelectEmpresas() {
+        ['cbEmpresa', 'filtroEmpresa', 'filtroEmpresaBoletos'].forEach(id => {
+            const select = document.getElementById(id);
+            if (!select) return;
+            select.innerHTML = id !== 'cbEmpresa' ? '<option value="todas">Todas</option>' : '';
+            for (let cod in empresas) {
+                const opt = document.createElement('option');
+                opt.value = cod;
+                opt.textContent = `${cod} - ${empresas[cod].nome}`;
+                select.appendChild(opt);
+            }
+        });
+    }
+
+    function carregarSelectCategorias() {
+        const select = document.getElementById('cbTipoDespesa');
+        if (!select) return;
+        select.innerHTML = '';
+        for (let cod in tiposDespesa) {
+            const opt = document.createElement('option');
+            opt.value = cod;
+            opt.textContent = `${cod} - ${tiposDespesa[cod]}`;
+            select.appendChild(opt);
+        }
+    }
+
+    function mostrarTela(id) {
+        document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+        document.getElementById(id).classList.add('ativa');
+        document.querySelectorAll('.erro, .sucesso').forEach(e => { e.style.display = 'none'; e.textContent = ''; });
+        if (id === 'telaCategorias') atualizarListaCategorias();
+        if (id === 'telaPagamento') carregarContaDebito();
+        if (id === 'telaProfessor') inicializarBoletosPadrao();
+    }
+
+    // ==================== INICIALIZAR BOLETOS PADRÃO ====================
+    async function inicializarBoletosPadrao() {
+        try {
+            const resp = await fetch(API_URL + '?tipo=boletos');
+            const boletos = await resp.json();
+            if (boletos.length === 0) {
+                const boletosPadrao = [
+                    // Empresa Teste (09125)
+                    { empresa: "09125", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "09125", tipo: "02", valor: 250.00, venc: "2026-07-03" },
+                    { empresa: "09125", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "09125", tipo: "04", valor: 90.00, venc: "2026-07-05" },
+                    { empresa: "09125", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Papelaria dos Vales (12027)
+                    { empresa: "12027", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "12027", tipo: "02", valor: 220.00, venc: "2026-07-03" },
+                    { empresa: "12027", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "12027", tipo: "04", valor: 85.00, venc: "2026-07-05" },
+                    { empresa: "12027", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Stella del Caffé (19314)
+                    { empresa: "19314", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "19314", tipo: "02", valor: 350.00, venc: "2026-07-03" },
+                    { empresa: "19314", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "19314", tipo: "04", valor: 110.00, venc: "2026-07-05" },
+                    { empresa: "19314", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Doce Encanto (21658)
+                    { empresa: "21658", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "21658", tipo: "02", valor: 280.00, venc: "2026-07-03" },
+                    { empresa: "21658", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "21658", tipo: "04", valor: 95.00, venc: "2026-07-05" },
+                    { empresa: "21658", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // House & Style (11054)
+                    { empresa: "11054", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "11054", tipo: "02", valor: 200.00, venc: "2026-07-03" },
+                    { empresa: "11054", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "11054", tipo: "04", valor: 85.00, venc: "2026-07-05" },
+                    { empresa: "11054", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Alphaman (51313)
+                    { empresa: "51313", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "51313", tipo: "02", valor: 180.00, venc: "2026-07-03" },
+                    { empresa: "51313", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "51313", tipo: "04", valor: 95.00, venc: "2026-07-05" },
+                    { empresa: "51313", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // King's Store (91477)
+                    { empresa: "91477", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "91477", tipo: "02", valor: 180.00, venc: "2026-07-03" },
+                    { empresa: "91477", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "91477", tipo: "04", valor: 85.00, venc: "2026-07-05" },
+                    { empresa: "91477", tipo: "05", valor: 1820.00, venc: "2026-06-29" },
+                    // Ace&Pés (10596)
+                    { empresa: "10596", tipo: "01", valor: 800.00, venc: "2026-06-30" },
+                    { empresa: "10596", tipo: "02", valor: 190.00, venc: "2026-07-03" },
+                    { empresa: "10596", tipo: "03", valor: 120.00, venc: "2026-07-07" },
+                    { empresa: "10596", tipo: "04", valor: 80.00, venc: "2026-07-05" },
+                    { empresa: "10596", tipo: "05", valor: 1820.00, venc: "2026-06-29" }
+                ];
+
+                for (let b of boletosPadrao) {
+                    const valorCentavos = Math.round(b.valor * 100);
+                    const valorStr = String(valorCentavos).padStart(6, '0');
+                    const base = b.empresa + b.tipo + valorStr;
+                    let soma = 0;
+                    for (let d of base) soma += parseInt(d);
+                    const dv = soma % 10;
+                    const codigoBarras = `${b.empresa}${b.tipo}${valorStr}${dv}`;
+
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'cadastrarBoleto',
+                            codigoEmpresa: b.empresa,
+                            tipoDespesaCod: b.tipo,
+                            tipoDespesaNome: tiposDespesa[b.tipo] || 'Despesa',
+                            valor: b.valor,
+                            valorStr,
+                            vencimento: b.venc,
+                            codigoBarras,
+                            digitoVerificador: dv
+                        })
+                    });
+                }
+                console.log('Boletos padrão cadastrados com sucesso!');
+            }
+        } catch (e) {
+            console.log('Erro ao inicializar boletos padrão:', e);
+        }
+    }
+
+    // ==================== LOGIN ====================
+    function fazerLogin() {
+        const codigo = document.getElementById('codigoLogin').value.trim();
+        const erroDiv = document.getElementById('erroLogin');
+        erroDiv.style.display = 'none';
+        if (codigo === PROFESSOR_ID) {
+            empresaAtual = { codigo: PROFESSOR_ID, nome: "Professor", conta: "00000-0" };
+            mostrarTela('telaProfessor');
+            return;
+        }
+        if (empresas[codigo]) {
+            empresaAtual = { codigo, ...empresas[codigo] };
+            document.getElementById('nomeEmpresa').textContent = empresaAtual.nome;
+            document.getElementById('codigoEmpresa').textContent = empresaAtual.codigo;
+            mostrarTela('telaPrincipal');
+        } else {
+            erroDiv.textContent = 'Código inválido.';
+            erroDiv.style.display = 'block';
+        }
+    }
+
+    function sair() {
+        empresaAtual = null;
+        document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+        document.getElementById('telaLogin').classList.add('ativa');
+        document.getElementById('codigoLogin').value = '';
+    }
+
+    function voltarParaAluno() {
+        document.getElementById('nomeEmpresa').textContent = empresaAtual.nome;
+        document.getElementById('codigoEmpresa').textContent = empresaAtual.codigo;
+        mostrarTela('telaPrincipal');
+    }
+
+    function voltarParaProfessor() { mostrarTela('telaProfessor'); }
+
+    // ==================== PAGAMENTO ====================
+    function carregarContaDebito() {
+        const select = document.getElementById('contaDebito');
+        select.innerHTML = '';
+        if (!empresaAtual || empresaAtual.codigo === PROFESSOR_ID) return;
+        const option = document.createElement('option');
+        option.value = empresaAtual.conta;
+        option.textContent = `${empresaAtual.nome} – Conta: ${empresaAtual.conta}`;
+        select.appendChild(option);
+    }
+
+    async function validarPagamento() {
+        const erroDiv = document.getElementById('erroPagamento');
+        erroDiv.style.display = 'none'; erroDiv.textContent = '';
+        erroDiv.style.background = '#fef2f2'; erroDiv.style.color = '#991b1b';
+
+        let codigoBarras = document.getElementById('codigoBarras').value.trim();
+        const dataPagamento = document.getElementById('dataPagamento').value;
+        if (!codigoBarras) { erroDiv.textContent = 'Digite o código de barras.'; erroDiv.style.display = 'block'; return; }
+        if (!dataPagamento) { erroDiv.textContent = 'Selecione a data de pagamento.'; erroDiv.style.display = 'block'; return; }
+
+        codigoBarras = codigoBarras.replace(/-/g, '');
+        if (codigoBarras.length !== 14) {
+            erroDiv.textContent = 'Código de barras deve ter 14 dígitos (sem traços).';
+            erroDiv.style.display = 'block'; return;
+        }
+
+        const codigoEmpresa = codigoBarras.substring(0, 5);
+        const tipoDespesaCod = codigoBarras.substring(5, 7);
+        const valorStr = codigoBarras.substring(7, 13);
+        const digitoVerificador = codigoBarras.substring(13, 14);
+
+        if (!empresas[codigoEmpresa]) { erroDiv.textContent = 'Código de empresa no boleto inválido.'; erroDiv.style.display = 'block'; return; }
+        
+        // Garantir que categorias padrão estejam disponíveis mesmo se API falhar
+        if (!tiposDespesa[tipoDespesaCod]) {
+            await carregarCategorias();
+            if (!tiposDespesa[tipoDespesaCod]) {
+                erroDiv.textContent = `Tipo de despesa inválido (código ${tipoDespesaCod}). Categorias disponíveis: ${Object.keys(tiposDespesa).join(', ')}.`;
+                erroDiv.style.display = 'block';
+                return;
+            }
+        }
+
+        const valor = parseFloat(valorStr) / 100;
+        if (isNaN(valor) || valor <= 0) { erroDiv.textContent = 'Valor inválido no código de barras.'; erroDiv.style.display = 'block'; return; }
+
+        let vencimentoOriginal = "Não informado";
+        try {
+            const response = await fetch(API_URL + '?tipo=boletos');
+            const boletos = await response.json();
+            const boletoEncontrado = boletos.find(b => 
+                b.CodigoEmpresa === codigoEmpresa && 
+                b.TipoDespesaCod === tipoDespesaCod && 
+                Math.abs(parseFloat(b.Valor) - valor) < 0.01
+            );
+            if (boletoEncontrado && boletoEncontrado.DataVencimento) {
+                vencimentoOriginal = new Date(boletoEncontrado.DataVencimento + 'T00:00:00').toLocaleDateString('pt-BR');
+            }
+        } catch (e) {}
+
+        pagamentoAtual = {
+            codigoEmpresa, tipoDespesaCod, tipoDespesaNome: tiposDespesa[tipoDespesaCod],
+            valor, dataPagamento,
+            codigoBarras: `${codigoEmpresa}${tipoDespesaCod}${valorStr}${digitoVerificador}`,
+            contaDebito: document.getElementById('contaDebito').value,
+            registradoPor: empresaAtual.codigo,
+            vencimentoOriginal
+        };
+
+        document.getElementById('resumoEmpresa').textContent = `${empresas[codigoEmpresa].nome} (${codigoEmpresa})`;
+        document.getElementById('resumoTipo').textContent = tiposDespesa[tipoDespesaCod];
+        document.getElementById('resumoValor').textContent = `R$ ${valor.toFixed(2)}`;
+        document.getElementById('resumoVencimento').textContent = vencimentoOriginal;
+        document.getElementById('resumoData').textContent = new Date(dataPagamento + 'T00:00:00').toLocaleDateString('pt-BR');
+        document.getElementById('resumoPagamento').style.display = 'block';
+    }
+
+    function cancelarPagamento() { pagamentoAtual = null; document.getElementById('resumoPagamento').style.display = 'none'; }
+
+    async function confirmarPagamento() {
+        if (!pagamentoAtual) return;
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ ...pagamentoAtual, action: 'pagar' })
+            });
+            const result = await response.json();
+            if (result.status === 'ok') {
+                const erroDiv = document.getElementById('erroPagamento');
+                erroDiv.style.display = 'block'; erroDiv.style.background = '#f0fdf4'; erroDiv.style.color = '#166534';
+                erroDiv.textContent = '✅ Pagamento registrado com sucesso!';
+                document.getElementById('resumoPagamento').style.display = 'none';
+                document.getElementById('codigoBarras').value = '';
+                pagamentoAtual = null;
+                setTimeout(() => { erroDiv.style.display = 'none'; erroDiv.style.background = '#fef2f2'; erroDiv.style.color = '#991b1b'; }, 3000);
+            }
+        } catch (e) {
+            document.getElementById('erroPagamento').style.display = 'block';
+            document.getElementById('erroPagamento').textContent = 'Erro ao registrar.';
+        }
+    }
+
+    // ==================== CONSULTA (ALUNO) ====================
+    async function carregarConsultas() {
+        const container = document.getElementById('tabelaConsulta');
+        container.innerHTML = '<p style="text-align:center; color:#666;">Carregando...</p>';
+        try {
+            const response = await fetch(API_URL + '?empresa=' + empresaAtual.codigo + '&tipo=pagamentos');
+            const dados = await response.json();
+            if (dados.length === 0) { container.innerHTML = '<p style="text-align:center; color:#666;">Nenhum pagamento encontrado.</p>'; return; }
+            dados.sort((a, b) => new Date(b.DataHora) - new Date(a.DataHora));
+            let html = '<table><tr><th>Data Pgto</th><th>Tipo</th><th>Valor</th></tr>';
+            dados.forEach(p => {
+                const df = p.DataPagamento ? new Date(p.DataPagamento + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+                html += `<tr><td>${df}</td><td>${p.TipoDespesaNome || '-'}</td><td>R$ ${parseFloat(p.Valor).toFixed(2)}</td></tr>`;
+            });
+            html += '</table><p style="text-align:center; color:#666; margin-top:10px;">Total: ' + dados.length + '</p>';
+            container.innerHTML = html;
+        } catch (e) { container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar.</p>'; }
+    }
+
+    // ==================== CADASTRO DE BOLETOS ====================
+    async function cadastrarBoleto() {
+        const erroDiv = document.getElementById('erroCadastro');
+        const sucessoDiv = document.getElementById('sucessoCadastro');
+        erroDiv.style.display = 'none'; sucessoDiv.style.display = 'none';
+
+        const codigoEmpresa = document.getElementById('cbEmpresa').value;
+        const tipoDespesaCod = document.getElementById('cbTipoDespesa').value;
+        const valorReais = parseFloat(document.getElementById('cbValor').value);
+        const vencimento = document.getElementById('cbVencimento').value;
+
+        if (!codigoEmpresa) { erroDiv.textContent = 'Selecione a empresa.'; erroDiv.style.display = 'block'; return; }
+        if (isNaN(valorReais) || valorReais <= 0) { erroDiv.textContent = 'Digite um valor válido.'; erroDiv.style.display = 'block'; return; }
+        if (!vencimento) { erroDiv.textContent = 'Selecione a data de vencimento.'; erroDiv.style.display = 'block'; return; }
+
+        const valorCentavos = Math.round(valorReais * 100);
+        const valorStr = String(valorCentavos).padStart(6, '0');
+        const base = codigoEmpresa + tipoDespesaCod + valorStr;
+        let soma = 0;
+        for (let d of base) soma += parseInt(d);
+        const dv = soma % 10;
+        const codigoBarras = `${codigoEmpresa}${tipoDespesaCod}${valorStr}${dv}`;
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'cadastrarBoleto',
+                    codigoEmpresa, tipoDespesaCod,
+                    tipoDespesaNome: tiposDespesa[tipoDespesaCod],
+                    valor: valorReais, valorStr, vencimento, codigoBarras, digitoVerificador: dv
+                })
+            });
+            const result = await response.json();
+            if (result.status === 'ok') {
+                sucessoDiv.innerHTML = `✅ Boleto cadastrado!<br><strong>Valor:</strong> R$ ${valorReais.toFixed(2)}<br><strong>Código de Barras:</strong> ${codigoBarras}<br><strong>Com traços:</strong> ${codigoEmpresa}-${tipoDespesaCod}-${valorStr}-${dv}`;
+                sucessoDiv.style.display = 'block';
+                document.getElementById('cbValor').value = '';
+            }
+        } catch (e) { erroDiv.textContent = 'Erro ao cadastrar.'; erroDiv.style.display = 'block'; }
+    }
+
+    // ==================== CONSULTA DE BOLETOS (PROFESSOR) ====================
+    async function carregarBoletos() {
+        const container = document.getElementById('tabelaBoletos');
+        const filtro = document.getElementById('filtroEmpresaBoletos').value;
+        container.innerHTML = '<p style="text-align:center; color:#666;">Carregando...</p>';
+        try {
+            let urlBoletos = API_URL + '?tipo=boletos';
+            if (filtro !== 'todas') urlBoletos += '&empresa=' + filtro;
+            const respBoletos = await fetch(urlBoletos);
+            const boletos = await respBoletos.json();
+
+            let urlPag = API_URL + '?tipo=pagamentos';
+            if (filtro !== 'todas') urlPag += '&empresa=' + filtro;
+            const respPag = await fetch(urlPag);
+            const pagamentos = await respPag.json();
+
+            if (boletos.length === 0) {
+                container.innerHTML = '<p style="text-align:center; color:#666;">Nenhum boleto encontrado.</p>';
+                return;
+            }
+
+            const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+            boletos.sort((a, b) => new Date(b.DataCadastro) - new Date(a.DataCadastro));
+            let html = '<table><tr><th>Empresa</th><th>Tipo</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Ações</th></tr>';
+            boletos.forEach(b => {
+                const nomeEmp = empresas[b.CodigoEmpresa] ? empresas[b.CodigoEmpresa].nome : b.CodigoEmpresa;
+                const venc = b.DataVencimento ? new Date(b.DataVencimento + 'T00:00:00') : null;
+                
+                const pago = pagamentos.some(p => 
+                    p.CodigoEmpresa === b.CodigoEmpresa && 
+                    p.TipoDespesaCod === b.TipoDespesaCod && 
+                    Math.abs(parseFloat(p.Valor) - parseFloat(b.Valor)) < 0.01
+                );
+
+                let status = '';
+                if (pago) {
+                    status = '<span class="status-liquidado">Liquidado</span>';
+                } else if (venc && venc < hoje) {
+                    status = '<span class="status-vencido">Vencido</span>';
+                } else {
+                    status = '<span class="status-registrado">Registrado</span>';
+                }
+
+                const vencStr = venc ? venc.toLocaleDateString('pt-BR') : '-';
+                html += `<tr>
+                    <td>${nomeEmp} (${b.CodigoEmpresa})</td>
+                    <td>${b.TipoDespesaNome || '-'}</td>
+                    <td>R$ ${parseFloat(b.Valor).toFixed(2)}</td>
+                    <td>${vencStr}</td>
+                    <td>${status}</td>
+                    <td><button class="btn-danger btn-sm" onclick="excluirBoleto('${b.CodigoBarras}')">🗑</button></td>
+                </tr>`;
+            });
+            html += '</table><p style="text-align:center; color:#666; margin-top:10px;">Total: ' + boletos.length + ' boletos</p>';
+            container.innerHTML = html;
+        } catch (e) { container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar.</p>'; }
+    }
+
+    async function excluirBoleto(codigoBarras) {
+        if (!confirm('Deseja realmente excluir este boleto?')) return;
+        try {
+            await fetch(API_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action: 'excluirBoleto', codigoBarras })
+            });
+            carregarBoletos();
+        } catch (e) { alert('Erro ao excluir boleto.'); }
+    }
+
+    // ==================== CONSULTA PAGAMENTOS (PROFESSOR) ====================
+    async function carregarConsultasProfessor() {
+        const container = document.getElementById('tabelaConsultaProfessor');
+        const filtro = document.getElementById('filtroEmpresa').value;
+        container.innerHTML = '<p style="text-align:center; color:#666;">Carregando...</p>';
+        try {
+            let url = API_URL + '?tipo=pagamentos';
+            if (filtro !== 'todas') url += '&empresa=' + filtro;
+            const response = await fetch(url);
+            const dados = await response.json();
+            if (dados.length === 0) { container.innerHTML = '<p style="text-align:center; color:#666;">Nenhum pagamento.</p>'; return; }
+            dados.sort((a, b) => new Date(b.DataHora) - new Date(a.DataHora));
+            let html = '<table><tr><th>Data Pgto</th><th>Empresa</th><th>Tipo</th><th>Valor</th></tr>';
+            dados.forEach(p => {
+                const df = p.DataPagamento ? new Date(p.DataPagamento + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+                const ne = empresas[p.CodigoEmpresa] ? empresas[p.CodigoEmpresa].nome : p.CodigoEmpresa;
+                html += `<tr><td>${df}</td><td>${ne}</td><td>${p.TipoDespesaNome || '-'}</td><td>R$ ${parseFloat(p.Valor).toFixed(2)}</td></tr>`;
+            });
+            html += '</table><p style="text-align:center; color:#666;">Total: ' + dados.length + '</p>';
+            container.innerHTML = html;
+        } catch (e) { container.innerHTML = '<p style="text-align:center; color:red;">Erro.</p>'; }
+    }
+
+    // ==================== CATEGORIAS ====================
+    async function adicionarCategoria() {
+        const erroDiv = document.getElementById('erroCategoria');
+        const sucessoDiv = document.getElementById('sucessoCategoria');
+        erroDiv.style.display = 'none'; sucessoDiv.style.display = 'none';
+        const codigo = document.getElementById('novaCategoriaCod').value.trim();
+        const nome = document.getElementById('novaCategoriaNome').value.trim();
+        if (!codigo || codigo.length !== 2) { erroDiv.textContent = 'Código deve ter 2 dígitos.'; erroDiv.style.display = 'block'; return; }
+        if (!nome) { erroDiv.textContent = 'Digite o nome.'; erroDiv.style.display = 'block'; return; }
+        if (tiposDespesa[codigo]) { erroDiv.textContent = 'Código já existe.'; erroDiv.style.display = 'block'; return; }
+        try {
+            await fetch(API_URL, { method: 'POST', body: JSON.stringify({ action: 'adicionarCategoria', codigo, nome }) });
+            tiposDespesa[codigo] = nome;
+            atualizarListaCategorias();
+            carregarSelectCategorias();
+            sucessoDiv.textContent = '✅ Categoria adicionada!';
+            sucessoDiv.style.display = 'block';
+            document.getElementById('novaCategoriaCod').value = '';
+            document.getElementById('novaCategoriaNome').value = '';
+        } catch (e) { erroDiv.textContent = 'Erro.'; erroDiv.style.display = 'block'; }
+    }
+
+    inicializar();
+</script>
+</body>
+</html>
