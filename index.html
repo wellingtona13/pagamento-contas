@@ -56,24 +56,19 @@
     </style>
 </head>
 <body>
-<div class="versao">v.28.06.10.4</div>
+<div class="versao">v.28.06.10.5</div>
 
 <div class="container">
 
-    <!-- TELA DE LOGIN -->
     <div class="tela ativa" id="telaLogin">
         <h2>🏦 Sistema de Pagamento de Contas</h2>
         <p style="text-align:center; color:#666; margin-bottom:20px;">Digite o código da sua empresa para acessar</p>
-        <div class="form-group">
-            <label for="codigoLogin">Código de Acesso</label>
-            <input type="text" id="codigoLogin" placeholder="Código da empresa ou do professor">
-        </div>
+        <div class="form-group"><label for="codigoLogin">Código de Acesso</label><input type="text" id="codigoLogin" placeholder="Código da empresa ou do professor"></div>
         <div class="msg msg-erro" id="erroLogin">Código inválido.</div>
         <button class="btn btn-primary" onclick="fazerLogin()">Entrar</button>
         <div class="status-bar" id="statusConexao">Verificando conexão...</div>
     </div>
 
-    <!-- TELA PRINCIPAL (ALUNO) -->
     <div class="tela" id="telaPrincipal">
         <h2>🏦 Sistema de Pagamento</h2>
         <p style="text-align:center; color:#666; margin-bottom:20px;">Empresa: <strong id="nomeEmpresa"></strong> | Código: <strong id="codigoEmpresa"></strong></p>
@@ -84,10 +79,10 @@
         <button class="btn btn-secondary" style="margin-top:10px;" onclick="sair()">🚪 Sair</button>
     </div>
 
-    <!-- TELA PRINCIPAL (PROFESSOR) -->
     <div class="tela" id="telaProfessor">
         <h2>🔧 Painel do Professor</h2>
         <p style="text-align:center; color:#666; margin-bottom:20px;">Código: <strong>210326</strong></p>
+        <div id="msgProfessor" class="msg msg-info" style="display:block;">Carregando dados da planilha...</div>
         <div class="btn-group">
             <button class="btn btn-primary" onclick="mostrarTela('telaCadastroBoleto')">📝 Cadastrar Boletos</button>
             <button class="btn btn-outline" onclick="mostrarTela('telaConsultaBoletos')">📋 Consultar Boletos</button>
@@ -97,7 +92,6 @@
         <button class="btn btn-secondary" style="margin-top:10px;" onclick="sair()">🚪 Sair</button>
     </div>
 
-    <!-- TELA DE PAGAMENTO -->
     <div class="tela" id="telaPagamento">
         <h3>💳 Pagar Conta</h3>
         <div class="form-group"><label for="contaDebito">Conta de Débito</label><select id="contaDebito"></select></div>
@@ -118,14 +112,12 @@
         <button class="btn btn-secondary" style="margin-top:15px;" onclick="voltarParaAluno()">⬅ Voltar</button>
     </div>
 
-    <!-- TELA DE CONSULTA (ALUNO) -->
     <div class="tela" id="telaConsulta">
         <h3>📋 Meus Pagamentos</h3>
         <div id="tabelaConsulta"><p class="sem-dados">Carregando...</p></div>
         <button class="btn btn-secondary" onclick="voltarParaAluno()">⬅ Voltar</button>
     </div>
 
-    <!-- TELA DE CADASTRO DE BOLETOS -->
     <div class="tela" id="telaCadastroBoleto">
         <h3>📝 Cadastrar Boleto</h3>
         <div class="form-group"><label for="cbEmpresa">Empresa</label><select id="cbEmpresa"></select></div>
@@ -138,7 +130,6 @@
         <button class="btn btn-secondary" style="margin-top:10px;" onclick="voltarParaProfessor()">⬅ Voltar</button>
     </div>
 
-    <!-- TELA DE CONSULTA DE BOLETOS (PROFESSOR) -->
     <div class="tela" id="telaConsultaBoletos">
         <h3>📋 Consultar Boletos</h3>
         <div class="filtros">
@@ -149,7 +140,6 @@
         <button class="btn btn-secondary" onclick="voltarParaProfessor()">⬅ Voltar</button>
     </div>
 
-    <!-- TELA DE CONSULTA DE PAGAMENTOS (PROFESSOR) -->
     <div class="tela" id="telaConsultaProfessor">
         <h3>📋 Pagamentos Realizados</h3>
         <div class="filtros">
@@ -160,7 +150,6 @@
         <button class="btn btn-secondary" onclick="voltarParaProfessor()">⬅ Voltar</button>
     </div>
 
-    <!-- TELA DE CATEGORIAS -->
     <div class="tela" id="telaCategorias">
         <h3>📂 Gerenciar Categorias</h3>
         <div class="categorias-list" id="listaCategorias"></div>
@@ -175,7 +164,7 @@
 
 <script>
     // ⚠️⚠️⚠️ SUBSTITUA PELA URL REAL DO SEU GOOGLE APPS SCRIPT ⚠️⚠️⚠️
-    const API_URL = "https://script.google.com/macros/s/AKfycbzfD6APxiw9bC-rv6Ml8n0aZTU5Z2rbC354iBQPsrtpUwAn_BlxeXE8hITSct2hyKEj1g/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbyioBZ4Mq5tMEOnlBrApNcUa9Zh4mvrwSt1CMeXI_Iwl_Hj2HsS8__7H03Dens2TKx6OQ/exec";
 
     const EMPRESAS = {
         "12027": { nome: "Papelaria dos Vales", conta: "06789-0" },
@@ -190,54 +179,84 @@
 
     const CATEGORIAS_PADRAO = { "01": "Aluguel", "02": "Energia Elétrica", "03": "Internet", "04": "Água e Esgoto", "05": "Folha Salarial" };
     const PROFESSOR_ID = "210326";
+    const BOLETOS_INICIAIS = [
+        { emp: "91250", tipo: "01", val: 800.00, venc: "2026-06-30" }, { emp: "91250", tipo: "02", val: 250.00, venc: "2026-07-03" },
+        { emp: "91250", tipo: "03", val: 120.00, venc: "2026-07-07" }, { emp: "91250", tipo: "04", val: 90.00, venc: "2026-07-05" },
+        { emp: "91250", tipo: "05", val: 1820.00, venc: "2026-06-29" }, { emp: "12027", tipo: "01", val: 800.00, venc: "2026-06-30" },
+        { emp: "12027", tipo: "02", val: 220.00, venc: "2026-07-03" }, { emp: "12027", tipo: "03", val: 120.00, venc: "2026-07-07" },
+        { emp: "12027", tipo: "04", val: 85.00, venc: "2026-07-05" }, { emp: "12027", tipo: "05", val: 1820.00, venc: "2026-06-29" },
+        { emp: "19314", tipo: "01", val: 800.00, venc: "2026-06-30" }, { emp: "19314", tipo: "02", val: 350.00, venc: "2026-07-03" },
+        { emp: "19314", tipo: "03", val: 120.00, venc: "2026-07-07" }, { emp: "19314", tipo: "04", val: 110.00, venc: "2026-07-05" },
+        { emp: "19314", tipo: "05", val: 1820.00, venc: "2026-06-29" }, { emp: "21658", tipo: "01", val: 800.00, venc: "2026-06-30" },
+        { emp: "21658", tipo: "02", val: 280.00, venc: "2026-07-03" }, { emp: "21658", tipo: "03", val: 120.00, venc: "2026-07-07" },
+        { emp: "21658", tipo: "04", val: 95.00, venc: "2026-07-05" }, { emp: "21658", tipo: "05", val: 1820.00, venc: "2026-06-29" },
+        { emp: "11054", tipo: "01", val: 800.00, venc: "2026-06-30" }, { emp: "11054", tipo: "02", val: 200.00, venc: "2026-07-03" },
+        { emp: "11054", tipo: "03", val: 120.00, venc: "2026-07-07" }, { emp: "11054", tipo: "04", val: 85.00, venc: "2026-07-05" },
+        { emp: "11054", tipo: "05", val: 1820.00, venc: "2026-06-29" }, { emp: "51313", tipo: "01", val: 800.00, venc: "2026-06-30" },
+        { emp: "51313", tipo: "02", val: 180.00, venc: "2026-07-03" }, { emp: "51313", tipo: "03", val: 120.00, venc: "2026-07-07" },
+        { emp: "51313", tipo: "04", val: 95.00, venc: "2026-07-05" }, { emp: "51313", tipo: "05", val: 1820.00, venc: "2026-06-29" },
+        { emp: "91477", tipo: "01", val: 800.00, venc: "2026-06-30" }, { emp: "91477", tipo: "02", val: 180.00, venc: "2026-07-03" },
+        { emp: "91477", tipo: "03", val: 120.00, venc: "2026-07-07" }, { emp: "91477", tipo: "04", val: 85.00, venc: "2026-07-05" },
+        { emp: "91477", tipo: "05", val: 1820.00, venc: "2026-06-29" }, { emp: "10596", tipo: "01", val: 800.00, venc: "2026-06-30" },
+        { emp: "10596", tipo: "02", val: 190.00, venc: "2026-07-03" }, { emp: "10596", tipo: "03", val: 120.00, venc: "2026-07-07" },
+        { emp: "10596", tipo: "04", val: 80.00, venc: "2026-07-05" }, { emp: "10596", tipo: "05", val: 1820.00, venc: "2026-06-29" }
+    ];
 
     let empresaAtual = null;
     let pagamentoAtual = null;
     let categorias = { ...CATEGORIAS_PADRAO };
     let conexaoOk = false;
 
-    // ==================== API (COMUNICAÇÃO COM PLANILHA) ====================
+    // ==================== API (FETCH COMPATÍVEL COM TODOS NAVEGADORES) ====================
+    function fetchComTimeout(url, options = {}, timeout = 12000) {
+        return new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('Timeout')), timeout);
+            fetch(url, options)
+                .then(response => { clearTimeout(timer); resolve(response); })
+                .catch(err => { clearTimeout(timer); reject(err); });
+        });
+    }
+
     async function chamarAPI(params = "") {
         try {
-            const url = API_URL + (params ? "?" + new URLSearchParams(params) : "");
-            const response = await fetch(url, {
-                headers: { 'Content-Type': 'application/json' },
-                signal: AbortSignal.timeout(10000)
-            });
+            const queryString = params ? "?" + new URLSearchParams(params).toString() : "";
+            const response = await fetchComTimeout(API_URL + queryString);
             if (!response.ok) throw new Error("HTTP " + response.status);
             const data = await response.json();
             conexaoOk = true;
-            document.getElementById('statusConexao').textContent = "✅ Conectado à planilha";
-            document.getElementById('statusConexao').style.color = "#22c55e";
+            atualizarStatusConexao(true);
             return data;
         } catch(e) {
             conexaoOk = false;
-            document.getElementById('statusConexao').textContent = "❌ Erro na conexão: " + e.message;
-            document.getElementById('statusConexao').style.color = "#ef4444";
+            atualizarStatusConexao(false, e.message);
             throw e;
         }
     }
 
     async function postAPI(dados) {
         try {
-            const response = await fetch(API_URL, {
+            const response = await fetchComTimeout(API_URL, {
                 method: 'POST',
                 body: JSON.stringify(dados),
-                headers: { 'Content-Type': 'application/json' },
-                signal: AbortSignal.timeout(10000)
+                headers: { 'Content-Type': 'application/json' }
             });
             if (!response.ok) throw new Error("HTTP " + response.status);
             const data = await response.json();
             conexaoOk = true;
-            document.getElementById('statusConexao').textContent = "✅ Conectado à planilha";
-            document.getElementById('statusConexao').style.color = "#22c55e";
+            atualizarStatusConexao(true);
             return data;
         } catch(e) {
             conexaoOk = false;
-            document.getElementById('statusConexao').textContent = "❌ Erro na conexão: " + e.message;
-            document.getElementById('statusConexao').style.color = "#ef4444";
+            atualizarStatusConexao(false, e.message);
             throw e;
         }
+    }
+
+    function atualizarStatusConexao(ok, msg = "") {
+        const el = document.getElementById('statusConexao');
+        if (!el) return;
+        el.textContent = ok ? "✅ Conectado à planilha" : ("❌ " + (msg || "Erro de conexão"));
+        el.style.color = ok ? "#22c55e" : "#ef4444";
     }
 
     // ==================== INICIALIZAÇÃO ====================
@@ -246,16 +265,9 @@
 
     async function inicializar() {
         carregarSelectEmpresas();
-        carregarSelectCategorias();
-        await verificarConexao();
-    }
-
-    async function verificarConexao() {
         try {
             await chamarAPI({ tipo: 'categorias' });
-        } catch(e) {
-            console.error("Falha ao conectar com a planilha");
-        }
+        } catch(e) {}
     }
 
     function carregarSelectEmpresas() {
@@ -289,6 +301,43 @@
         if (id === 'telaPagamento') carregarContaDebito();
         if (id === 'telaCategorias') carregarListaCategorias();
         if (id === 'telaCadastroBoleto') carregarSelectCategorias();
+        if (id === 'telaProfessor') iniciarPainelProfessor();
+    }
+
+    // ==================== PAINEL PROFESSOR ====================
+    async function iniciarPainelProfessor() {
+        const msgDiv = document.getElementById('msgProfessor');
+        msgDiv.style.display = 'block';
+        msgDiv.textContent = 'Verificando boletos na planilha...';
+        try {
+            const boletos = await chamarAPI({ tipo: 'boletos' });
+            if (!Array.isArray(boletos) || boletos.length === 0) {
+                msgDiv.textContent = 'Cadastrando boletos iniciais na planilha...';
+                for (let b of BOLETOS_INICIAIS) {
+                    const centavos = Math.round(b.val * 100);
+                    const valStr = String(centavos).padStart(6, '0');
+                    const base = b.emp + b.tipo + valStr;
+                    let soma = 0; for (let d of base) soma += parseInt(d);
+                    const dv = soma % 10;
+                    const codigoBarras = `${b.emp}${b.tipo}${valStr}${dv}`;
+                    try {
+                        await postAPI({
+                            action: 'cadastrarBoleto',
+                            codigoEmpresa: b.emp, tipoDespesaCod: b.tipo,
+                            tipoDespesaNome: categorias[b.tipo] || 'Despesa',
+                            valor: b.val, valorStr: valStr,
+                            vencimento: b.venc, codigoBarras, digitoVerificador: dv
+                        });
+                    } catch(e) { console.error("Falha ao cadastrar boleto inicial:", e); }
+                }
+                msgDiv.textContent = '✅ Boletos iniciais cadastrados na planilha!';
+            } else {
+                msgDiv.textContent = `✅ ${boletos.length} boletos já cadastrados na planilha.`;
+            }
+        } catch(e) {
+            msgDiv.textContent = '❌ Não foi possível acessar a planilha. Verifique a conexão.';
+        }
+        setTimeout(() => { msgDiv.style.display = 'none'; }, 4000);
     }
 
     // ==================== LOGIN ====================
@@ -318,12 +367,7 @@
         document.getElementById('codigoLogin').value = '';
     }
 
-    function voltarParaAluno() {
-        document.getElementById('nomeEmpresa').textContent = empresaAtual.nome;
-        document.getElementById('codigoEmpresa').textContent = empresaAtual.codigo;
-        mostrarTela('telaPrincipal');
-    }
-
+    function voltarParaAluno() { mostrarTela('telaPrincipal'); }
     function voltarParaProfessor() { mostrarTela('telaProfessor'); }
 
     // ==================== PAGAMENTO ====================
@@ -339,23 +383,15 @@
 
     function validarPagamento() {
         const erroDiv = document.getElementById('erroPagamento');
-        erroDiv.style.display = 'none'; erroDiv.textContent = '';
-        erroDiv.className = 'msg msg-erro';
-
+        erroDiv.style.display = 'none'; erroDiv.className = 'msg msg-erro';
         let codigoBarras = document.getElementById('codigoBarras').value.trim().replace(/-/g, '');
         const dataPagamento = document.getElementById('dataPagamento').value;
-        if (!codigoBarras || codigoBarras.length !== 14) {
-            erroDiv.textContent = 'Código de barras deve ter 14 dígitos.'; erroDiv.style.display = 'block'; return;
-        }
-        if (!dataPagamento) {
-            erroDiv.textContent = 'Selecione a data de pagamento.'; erroDiv.style.display = 'block'; return;
-        }
-
+        if (!codigoBarras || codigoBarras.length !== 14) { erroDiv.textContent = 'Código de barras deve ter 14 dígitos.'; erroDiv.style.display = 'block'; return; }
+        if (!dataPagamento) { erroDiv.textContent = 'Selecione a data de pagamento.'; erroDiv.style.display = 'block'; return; }
         const codigoEmpresa = codigoBarras.substring(0, 5);
         const tipoDespesaCod = codigoBarras.substring(5, 7);
         const valorStr = codigoBarras.substring(7, 13);
         const valor = parseFloat(valorStr) / 100;
-
         if (!EMPRESAS[codigoEmpresa]) { erroDiv.textContent = 'Código de empresa inválido.'; erroDiv.style.display = 'block'; return; }
         if (!categorias[tipoDespesaCod]) { erroDiv.textContent = 'Tipo de despesa inválido.'; erroDiv.style.display = 'block'; return; }
         if (isNaN(valor) || valor <= 0) { erroDiv.textContent = 'Valor inválido.'; erroDiv.style.display = 'block'; return; }
@@ -375,40 +411,32 @@
         document.getElementById('resumoPagamento').style.display = 'block';
     }
 
-    function cancelarPagamento() {
-        pagamentoAtual = null;
-        document.getElementById('resumoPagamento').style.display = 'none';
-    }
+    function cancelarPagamento() { pagamentoAtual = null; document.getElementById('resumoPagamento').style.display = 'none'; }
 
     async function confirmarPagamento() {
         if (!pagamentoAtual) return;
         const erroDiv = document.getElementById('erroPagamento');
         try {
             await postAPI({ ...pagamentoAtual, action: 'pagar' });
-            erroDiv.style.display = 'block';
-            erroDiv.className = 'msg msg-sucesso';
+            erroDiv.style.display = 'block'; erroDiv.className = 'msg msg-sucesso';
             erroDiv.textContent = '✅ Pagamento registrado com sucesso!';
             document.getElementById('resumoPagamento').style.display = 'none';
             document.getElementById('codigoBarras').value = '';
             pagamentoAtual = null;
             setTimeout(() => { erroDiv.style.display = 'none'; }, 3000);
         } catch(e) {
-            erroDiv.style.display = 'block';
-            erroDiv.className = 'msg msg-erro';
-            erroDiv.textContent = 'Erro ao registrar pagamento. Verifique a conexão.';
+            erroDiv.style.display = 'block'; erroDiv.className = 'msg msg-erro';
+            erroDiv.textContent = 'Erro ao registrar. Verifique a conexão.';
         }
     }
 
-    // ==================== CONSULTA (ALUNO) ====================
+    // ==================== CONSULTAS ====================
     async function carregarConsultasAluno() {
         const container = document.getElementById('tabelaConsulta');
         container.innerHTML = '<p class="sem-dados">Carregando...</p>';
         try {
             const dados = await chamarAPI({ tipo: 'pagamentos', empresa: empresaAtual.codigo });
-            if (!Array.isArray(dados) || dados.length === 0) {
-                container.innerHTML = '<p class="sem-dados">Nenhum pagamento encontrado.</p>';
-                return;
-            }
+            if (!Array.isArray(dados) || dados.length === 0) { container.innerHTML = '<p class="sem-dados">Nenhum pagamento.</p>'; return; }
             dados.sort((a, b) => new Date(b.DataHora) - new Date(a.DataHora));
             let html = '<table><tr><th>Data Pgto</th><th>Tipo</th><th>Valor</th></tr>';
             dados.forEach(p => {
@@ -417,116 +445,82 @@
             });
             html += '</table><p style="text-align:center; color:#666;">Total: ' + dados.length + '</p>';
             container.innerHTML = html;
-        } catch(e) {
-            container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar. Verifique a conexão.</p>';
-        }
+        } catch(e) { container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar.</p>'; }
     }
 
-    // ==================== CADASTRO DE BOLETOS ====================
     async function cadastrarBoleto() {
         const erroDiv = document.getElementById('erroCadastro');
         const sucessoDiv = document.getElementById('sucessoCadastro');
         erroDiv.style.display = 'none'; sucessoDiv.style.display = 'none';
-
         const codigoEmpresa = document.getElementById('cbEmpresa').value;
         const tipoDespesaCod = document.getElementById('cbTipoDespesa').value;
         const valorReais = parseFloat(document.getElementById('cbValor').value);
         const vencimento = document.getElementById('cbVencimento').value;
-
         if (!codigoEmpresa) { erroDiv.textContent = 'Selecione a empresa.'; erroDiv.style.display = 'block'; return; }
         if (isNaN(valorReais) || valorReais <= 0) { erroDiv.textContent = 'Digite um valor válido.'; erroDiv.style.display = 'block'; return; }
         if (!vencimento) { erroDiv.textContent = 'Selecione a data de vencimento.'; erroDiv.style.display = 'block'; return; }
-
         const centavos = Math.round(valorReais * 100);
         const valStr = String(centavos).padStart(6, '0');
         const base = codigoEmpresa + tipoDespesaCod + valStr;
         let soma = 0; for (let d of base) soma += parseInt(d);
         const dv = soma % 10;
         const codigoBarras = `${codigoEmpresa}${tipoDespesaCod}${valStr}${dv}`;
-
         try {
-            await postAPI({
-                action: 'cadastrarBoleto',
-                codigoEmpresa, tipoDespesaCod,
-                tipoDespesaNome: categorias[tipoDespesaCod],
-                valor: valorReais, valorStr: valStr,
-                vencimento, codigoBarras, digitoVerificador: dv
-            });
-            sucessoDiv.innerHTML = `✅ Boleto cadastrado!<br><strong>Valor:</strong> R$ ${valorReais.toFixed(2)}<br><strong>Código:</strong> ${codigoBarras}<br><strong>Com traços:</strong> ${codigoEmpresa}-${tipoDespesaCod}-${valStr}-${dv}`;
-            sucessoDiv.style.display = 'block';
-            document.getElementById('cbValor').value = '';
-        } catch(e) {
-            erroDiv.textContent = 'Erro ao cadastrar. Verifique a conexão.';
-            erroDiv.style.display = 'block';
-        }
+            await postAPI({ action: 'cadastrarBoleto', codigoEmpresa, tipoDespesaCod, tipoDespesaNome: categorias[tipoDespesaCod], valor: valorReais, valorStr: valStr, vencimento, codigoBarras, digitoVerificador: dv });
+            sucessoDiv.innerHTML = `✅ Boleto cadastrado!<br><strong>Valor:</strong> R$ ${valorReais.toFixed(2)}<br><strong>Código:</strong> ${codigoBarras}`;
+            sucessoDiv.style.display = 'block'; document.getElementById('cbValor').value = '';
+        } catch(e) { erroDiv.textContent = 'Erro ao cadastrar.'; erroDiv.style.display = 'block'; }
     }
 
-    // ==================== CONSULTA DE BOLETOS (PROFESSOR) ====================
     async function carregarBoletos() {
         const container = document.getElementById('tabelaBoletos');
         const filtro = document.getElementById('filtroEmpresaBoletos').value;
         container.innerHTML = '<p class="sem-dados">Carregando...</p>';
         try {
-            const boletos = await chamarAPI({ tipo: 'boletos', empresa: filtro !== 'todas' ? filtro : '' });
-            const pagamentos = await chamarAPI({ tipo: 'pagamentos', empresa: filtro !== 'todas' ? filtro : '' });
-
-            if (!Array.isArray(boletos) || boletos.length === 0) {
-                container.innerHTML = '<p class="sem-dados">Nenhum boleto encontrado.</p>';
-                return;
-            }
-
+            const [boletos, pagamentos] = await Promise.all([
+                chamarAPI({ tipo: 'boletos', empresa: filtro !== 'todas' ? filtro : '' }),
+                chamarAPI({ tipo: 'pagamentos', empresa: filtro !== 'todas' ? filtro : '' })
+            ]);
+            if (!Array.isArray(boletos) || boletos.length === 0) { container.innerHTML = '<p class="sem-dados">Nenhum boleto.</p>'; return; }
             const hoje = new Date(); hoje.setHours(0,0,0,0);
             let html = '<table><tr><th>Empresa</th><th>Tipo</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Ações</th></tr>';
             boletos.forEach(b => {
-                const codEmp = String(b.CodigoEmpresa || '').replace(/'/g, '');
+                const codEmp = String(b.CodigoEmpresa || '');
                 const nomeEmp = EMPRESAS[codEmp] ? EMPRESAS[codEmp].nome : codEmp;
-                const vencStr = String(b.DataVencimento || '').replace(/'/g, '');
+                const vencStr = String(b.DataVencimento || '');
                 const venc = vencStr ? new Date(vencStr + 'T00:00:00') : null;
-                const codBarras = String(b.CodigoBarras || '').replace(/'/g, '');
-                const pago = Array.isArray(pagamentos) && pagamentos.some(p => String(p.CodigoBarras || '').replace(/'/g, '') === codBarras);
-                const status = pago ? '<span class="badge badge-pago">Pago</span>' :
-                               (venc && venc < hoje ? '<span class="badge badge-vencido">Vencido</span>' : '<span class="badge badge-registrado">Registrado</span>');
+                const codBarras = String(b.CodigoBarras || '');
+                const pago = Array.isArray(pagamentos) && pagamentos.some(p => String(p.CodigoBarras || '') === codBarras);
+                const status = pago ? '<span class="badge badge-pago">Pago</span>' : (venc && venc < hoje ? '<span class="badge badge-vencido">Vencido</span>' : '<span class="badge badge-registrado">Registrado</span>');
                 html += `<tr><td>${nomeEmp} (${codEmp})</td><td>${b.TipoDespesaNome || '-'}</td><td>R$ ${parseFloat(b.Valor).toFixed(2)}</td><td>${venc ? venc.toLocaleDateString('pt-BR') : '-'}</td><td>${status}</td><td><button class="btn-danger btn-sm" onclick="excluirBoleto('${codBarras}')">🗑</button></td></tr>`;
             });
-            html += '</table><p style="text-align:center; color:#666;">Total: ' + boletos.length + ' boletos</p>';
+            html += '</table><p style="text-align:center; color:#666;">Total: ' + boletos.length + '</p>';
             container.innerHTML = html;
-        } catch(e) {
-            container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar. Verifique a conexão.</p>';
-        }
+        } catch(e) { container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar.</p>'; }
     }
 
     async function excluirBoleto(codigoBarras) {
-        if (!confirm('Excluir este boleto?')) return;
-        try {
-            await postAPI({ action: 'excluirBoleto', codigoBarras });
-            carregarBoletos();
-        } catch(e) { alert('Erro ao excluir.'); }
+        if (!confirm('Excluir?')) return;
+        try { await postAPI({ action: 'excluirBoleto', codigoBarras }); carregarBoletos(); } catch(e) { alert('Erro.'); }
     }
 
-    // ==================== CONSULTA PAGAMENTOS (PROFESSOR) ====================
     async function carregarConsultasProfessor() {
         const container = document.getElementById('tabelaConsultaProfessor');
         const filtro = document.getElementById('filtroEmpresa').value;
         container.innerHTML = '<p class="sem-dados">Carregando...</p>';
         try {
             const dados = await chamarAPI({ tipo: 'pagamentos', empresa: filtro !== 'todas' ? filtro : '' });
-            if (!Array.isArray(dados) || dados.length === 0) {
-                container.innerHTML = '<p class="sem-dados">Nenhum pagamento encontrado.</p>';
-                return;
-            }
+            if (!Array.isArray(dados) || dados.length === 0) { container.innerHTML = '<p class="sem-dados">Nenhum pagamento.</p>'; return; }
             dados.sort((a, b) => new Date(b.DataHora) - new Date(a.DataHora));
             let html = '<table><tr><th>Data Pgto</th><th>Empresa</th><th>Tipo</th><th>Valor</th></tr>';
             dados.forEach(p => {
                 const df = p.DataPagamento ? new Date(p.DataPagamento + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
-                const codEmp = String(p.CodigoEmpresa || '').replace(/'/g, '');
-                const ne = EMPRESAS[codEmp] ? EMPRESAS[codEmp].nome : codEmp;
-                html += `<tr><td>${df}</td><td>${ne}</td><td>${p.TipoDespesaNome || '-'}</td><td>R$ ${parseFloat(p.Valor).toFixed(2)}</td></tr>`;
+                const codEmp = String(p.CodigoEmpresa || '');
+                html += `<tr><td>${df}</td><td>${EMPRESAS[codEmp]?.nome || codEmp}</td><td>${p.TipoDespesaNome || '-'}</td><td>R$ ${parseFloat(p.Valor).toFixed(2)}</td></tr>`;
             });
             html += '</table><p style="text-align:center; color:#666;">Total: ' + dados.length + '</p>';
             container.innerHTML = html;
-        } catch(e) {
-            container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar. Verifique a conexão.</p>';
-        }
+        } catch(e) { container.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar.</p>'; }
     }
 
     // ==================== CATEGORIAS ====================
@@ -536,26 +530,17 @@
         try {
             const dados = await chamarAPI({ tipo: 'categorias' });
             categorias = { ...CATEGORIAS_PADRAO };
-            if (Array.isArray(dados)) {
-                dados.forEach(c => { categorias[c.Codigo] = c.Nome; });
-            }
+            if (Array.isArray(dados)) dados.forEach(c => { categorias[c.Codigo] = c.Nome; });
             let html = '';
-            for (let cod in categorias) {
-                html += `<div class="categoria-item"><span>${cod} - ${categorias[cod]}</span><button onclick="excluirCategoria('${cod}')">🗑</button></div>`;
-            }
+            for (let cod in categorias) html += `<div class="categoria-item"><span>${cod} - ${categorias[cod]}</span><button onclick="excluirCategoria('${cod}')">🗑</button></div>`;
             lista.innerHTML = html || '<p style="text-align:center; color:#666;">Nenhuma categoria.</p>';
             carregarSelectCategorias();
-        } catch(e) {
-            lista.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar categorias.</p>';
-        }
+        } catch(e) { lista.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar.</p>'; }
     }
 
     async function excluirCategoria(codigo) {
-        if (!confirm(`Excluir categoria ${codigo}?`)) return;
-        try {
-            await postAPI({ action: 'excluirCategoria', codigo });
-            carregarListaCategorias();
-        } catch(e) { alert('Erro ao excluir.'); }
+        if (!confirm('Excluir?')) return;
+        try { await postAPI({ action: 'excluirCategoria', codigo }); carregarListaCategorias(); } catch(e) { alert('Erro.'); }
     }
 
     async function adicionarCategoria() {
@@ -568,18 +553,12 @@
         if (!nome) { erroDiv.textContent = 'Digite o nome.'; erroDiv.style.display = 'block'; return; }
         try {
             await postAPI({ action: 'adicionarCategoria', codigo, nome });
-            sucessoDiv.textContent = '✅ Categoria adicionada!';
-            sucessoDiv.style.display = 'block';
-            document.getElementById('novaCategoriaCod').value = '';
-            document.getElementById('novaCategoriaNome').value = '';
+            sucessoDiv.textContent = '✅ Adicionada!'; sucessoDiv.style.display = 'block';
+            document.getElementById('novaCategoriaCod').value = ''; document.getElementById('novaCategoriaNome').value = '';
             carregarListaCategorias();
-        } catch(e) {
-            erroDiv.textContent = 'Erro ao adicionar. Verifique a conexão.';
-            erroDiv.style.display = 'block';
-        }
+        } catch(e) { erroDiv.textContent = 'Erro.'; erroDiv.style.display = 'block'; }
     }
 
-    // ==================== INICIAR ====================
     inicializar();
 </script>
 </body>
